@@ -3,7 +3,8 @@ getGitStatus() {
 	echo
 	cd $1/..
 	pwd
-	git status -s --branch
+	git fetch --all
+	git status -s -b
 }
 
 export -f getGitStatus
