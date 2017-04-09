@@ -1,0 +1,10 @@
+#!/bin/sh
+getGitStatus() {
+	echo
+	cd $1/..
+	pwd
+	git status -s --branch
+}
+
+export -f getGitStatus
+find usrsettings usrdoc usrdev -name .git -type d -exec sh -c 'getGitStatus "$1"' _ {} \;
