@@ -6,6 +6,12 @@ getGitStatus() {
 	git fetch --all 2>/dev/null
 	git status -s -b 2>/dev/null
 }
-
 export -f getGitStatus
+
+if [ "$GITSTAT_BASEDIR" == "" ] || [ "$GITSTAT_BASEDIR" == "/" ]
+then
+	echo GITSTAT_BASEDIR must be non-empty and must not point to "/" >&2
+	exit -1
+fi
+cd $GITSTAT_BASEDIR
 find usrsettings usrdoc usrdev -name .git -type d -exec sh -c 'getGitStatus "$1"' _ {} \;
