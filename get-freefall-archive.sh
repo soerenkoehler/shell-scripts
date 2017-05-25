@@ -1,15 +1,23 @@
 #!/bin/sh
 
-download() {
+initialize() {
 	if which wget >/dev/null 2>/dev/null; then
-		wget "$BASE_URL$1" >$2
+		DOWNLOAD_CMD=wget
 		return
 	elif which curl >/dev/null 2>/dev/null; then
-		curl "$BASE_URL$1" -s >$2
+		DOWNLOAD_CMD=curl
 		return
 	fi
 	echo please install wget or curl >&2
 	exit -1
+}
+
+download() {
+	if [ $DOWNLOAD_CMD == "wget" ]; then
+		wget "$BASE_URL$1" >$2
+	elif [ $DOWNLOAD_CMD == "curl" ]; then
+		curl "$BASE_URL$1" -s -o $2
+	fi
 }
 
 downloadPage() {
@@ -51,19 +59,33 @@ updateURL() {
 	}';
 }
 
+downloadAll() {
+	downloadPage $CURRENT_URL
+	CURRENT_URL=$(updateURL $CURRENT_URL $(getPageURL "Story Start"))
+
+	while [ -n $CURRENT_URL ]; do
+		downloadPage $CURRENT_URL
+		IMAGE_URL=$(updateURL $CURRENT_URL $(getImageURL))
+		downloadImage $IMAGE_URL
+		echo $IMAGE_URL
+		CURRENT_URL=$(updateURL $CURRENT_URL $(getPageURL "Next"))
+	done
+}
+
+createHTML() {
+	downloadAll | awk '
+		BEGIN { print "<html><head><title>Freefall</title></head><body>" }
+		{ print "<img src=\"" substr($0, 2) "\"/><br/><br/>" }
+		END { print "</body></html>" }
+	';
+}
+
 TEMP_FILE="tmp.html"
 TEMP_IMAGE="tmp.gif"
 BASE_URL="http://freefall.purrsia.com"
 CURRENT_URL="/grayff.htm"
 
-downloadPage $CURRENT_URL
-CURRENT_URL=$(updateURL $CURRENT_URL $(getPageURL "Story Start"))
-
-while [ -n $CURRENT_URL ]; do
-	echo $CURRENT_URL
-	downloadPage $CURRENT_URL
-	downloadImage $(updateURL $CURRENT_URL $(getImageURL))
-	CURRENT_URL=$(updateURL $CURRENT_URL $(getPageURL "Next"))
-done
+initialize
+createHTML
 
 rm $TEMP_FILE
