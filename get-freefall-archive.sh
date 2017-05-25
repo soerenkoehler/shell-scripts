@@ -60,23 +60,46 @@ updateURL() {
 	}';
 }
 
+getDatum () {
+	awk ' BEGIN { stop = 0 }
+	!stop {
+		if( match(tolower($0), /<!-\s(\w+\s\w+,\s\w+)\s->/, result) ) {
+			print substr($0, result[1, "start"], result[1, "length"]);
+			stop = 1;
+		} else if( match(tolower($0), /<title>\w+\s\w+\s+(\w+\s\w+,\s\w+)<\/title>/, result) ) {
+			print substr($0, result[1, "start"], result[1, "length"]);
+			stop = 1;
+		}
+	}' $TEMP_FILE;
+}
+
+downloadOne() {
+	downloadPage $CURRENT_URL
+	IMAGE_URL=$(updateURL $CURRENT_URL $(getImageURL))
+	DATUM=$(getDatum)
+	downloadImage $IMAGE_URL
+	echo "$IMAGE_URL|$DATUM"
+	NEW_URL=$(getPageURL "Next")
+	if [ -n $NEW_URL ]; then
+		CURRENT_URL=$(updateURL $CURRENT_URL $NEW_URL)
+	else
+		CURRENT_URL=""
+	fi
+}
+
 downloadAll() {
 	downloadPage $CURRENT_URL
 	CURRENT_URL=$(updateURL $CURRENT_URL $(getPageURL "Story Start"))
 
 	while [ -n $CURRENT_URL ]; do
-		downloadPage $CURRENT_URL
-		IMAGE_URL=$(updateURL $CURRENT_URL $(getImageURL))
-		downloadImage $IMAGE_URL
-		echo $IMAGE_URL
-		CURRENT_URL=$(updateURL $CURRENT_URL $(getPageURL "Next"))
+		downloadOne
 	done
 }
 
 createHTML() {
 	downloadAll | awk '
-		BEGIN { print "<html><head><title>Freefall</title></head><body>" }
-		{ print "<img src=\"" substr($0, 2) "\"/><br/><br/>" }
+		BEGIN { FS="|"; print "<html><head><title>Freefall</title></head><body>" }
+		{ print "<p>" $2 "<br/><img src=\"" substr($1, 2) "\"/></p>" }
 		END { print "</body></html>" }
 	';
 }
