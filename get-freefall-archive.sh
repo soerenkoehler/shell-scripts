@@ -48,6 +48,7 @@ getImageURL() {
 
 updateURL() {
 	echo | awk -v oldURL="$1" -v newURL="$2" '{
+		sub(/\/fc/, "/fv", newURL);
 		if( newURL ~ /^\// ) {
 			print newURL;
 		} else {
