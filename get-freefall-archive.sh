@@ -80,7 +80,7 @@ downloadOne() {
 	downloadImage $IMAGE_URL
 	echo "$IMAGE_URL|$DATUM"
 	NEW_URL=$(getPageURL "Next")
-	if [ -n $NEW_URL ]; then
+	if [ -n "$NEW_URL" ]; then
 		CURRENT_URL=$(updateURL $CURRENT_URL $NEW_URL)
 	else
 		CURRENT_URL=""
@@ -91,7 +91,7 @@ downloadAll() {
 	downloadPage $CURRENT_URL
 	CURRENT_URL=$(updateURL $CURRENT_URL $(getPageURL "Story Start"))
 
-	while [ -n $CURRENT_URL ]; do
+	while [ -n "$CURRENT_URL" ]; do
 		downloadOne
 	done
 }
