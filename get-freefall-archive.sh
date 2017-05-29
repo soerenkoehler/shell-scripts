@@ -14,7 +14,7 @@ initialize() {
 
 download() {
 	if [ $DOWNLOAD_CMD == "wget" ]; then
-		wget "$BASE_URL$1" >$2
+		wget "$BASE_URL$1" -q -O $2
 	elif [ $DOWNLOAD_CMD == "curl" ]; then
 		curl "$BASE_URL$1" -s -o $2
 	fi
