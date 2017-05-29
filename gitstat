@@ -1,4 +1,5 @@
 #!/bin/sh
+
 getGitStatus() {
 	echo
 	cd $1/..
