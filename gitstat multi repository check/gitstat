@@ -15,4 +15,4 @@ then
 	exit -1
 fi
 cd $GITSTAT_BASEDIR
-find usrsettings usrdoc usrdev -name .git -type d -exec sh -c 'getGitStatus "$1"' _ {} \;
+find $GITSTAT_REPOLIST -name .git -type d -exec sh -c 'getGitStatus "$1"' _ {} \;
