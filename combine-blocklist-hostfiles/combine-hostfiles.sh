@@ -23,7 +23,7 @@ getfile http://www.malwaredomainlist.com/hostslist/hosts.txt;
 getfile http://mirror1.malwaredomains.com/files/justdomains;
 getfile http://winhelp2002.mvps.org/hosts.txt;
 getfile http://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts\&showintro=1\&mimetype=plaintext;
-getfile http://gist.github.com/soerenkoehler/d3d97ba5a475ebc8aded/raw/~additional-adservers.txt
+cat additional-adservers.txt
 #
 # make sure, localhost is added
 #

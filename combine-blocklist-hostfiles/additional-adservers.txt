@@ -1,0 +1,9 @@
+#
+# additional adservers may go here
+#
+127.0.0.1 connectormwi.laterpay.net
+#
+# not exactly adservers, but content I do not like to see accidentally
+#
+127.0.0.1 www.bento.de
+127.0.0.1 ze.tt

@@ -1,5 +1,9 @@
 #!/bin/sh
 
+#
+# To get a list of available files, see http://download.osmand.net/list.php
+#
+
 get() {
 	echo `date` downloading: $1
 	wget -nv -O $1 http://download.osmand.net/download.php?standard=yes\&file=$1
