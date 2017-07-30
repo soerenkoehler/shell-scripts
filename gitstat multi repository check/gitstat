@@ -5,7 +5,8 @@ getGitStatus() {
 	cd $1/..
 	pwd
 	git fetch --all 2>/dev/null
-	git status -s -b 2>/dev/null
+	git status -s 2>/dev/null
+	git branch -avvv 2>/dev/null
 }
 export -f getGitStatus
 
