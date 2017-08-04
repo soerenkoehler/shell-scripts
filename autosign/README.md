@@ -67,6 +67,17 @@ The first line ensures that the service starts on logon and the second line star
 
 ### 5. Create the filter ###
 
+The simplest approach to process the body of a mail in postfix seems to be the [after-queue-filter](http://www.postfix.org/FILTER_README.html). Basically you can follow the [Simple content filter example](http://www.postfix.org/FILTER_README.html#simple_filter).
+
+Pitfalls and differences to the boilerplate code:
+- Postfix may leave the `sendmail` command untouched and use `sendmail.postfix` instead. As this was the case with Fedora 23, I had to use the latter in `autosign-filter`.
+- The shell variable `$$` contains the process ID of the filter script and is used to separate the temporary files of different invocations. For debugging and testing I found it more intuitive to have `$$` as filename instead of extension. 
+- Using a seperate output file and checking for its existence allows debugging without really sending the mail. Just write to e.g. `$$.tmp` instead of `$$.out`.
+
+The files:  
+[`autosign-filter`](./autosign-filter)  
+[`autosign_action`](./autosign-action)
+
 => http://www.postfix.org/FILTER_README.html#simple_filter
 
 ### 6. Milestone: Create autosigned mail ###

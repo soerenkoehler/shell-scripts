@@ -1,0 +1,65 @@
+#!/bin/sh
+
+#
+# extract mail parts
+#
+awk -v filehead=$1.head -v filebody=$1.body -v filemime=$1.mime '
+  BEGIN { body = 0; mime = 0; }
+  body == 0 {
+    if( match($0, /^$/) ) {
+      body = 1;
+      next;
+    }
+    if( mime == 0 ) {
+      if( match(tolower($0), /^content-type/ ) ) {
+        mime = 1;
+      }
+    } else if( mime == 1 ) {
+      if( match($0, /^\w/) ) {
+        mime = 2;
+      }
+    }
+    if( mime == 1 ) {
+      print >> filemime;
+    } else {
+      print >> filehead;
+    }
+  }
+  body == 1 {
+    print >> filebody;
+  }
+' $1.in
+
+#
+# create full mime multipart body
+#
+{
+  cat $1.mime
+  echo
+  cat $1.body
+} >$1.fullbody
+
+#
+# sign body
+gpg2 --batch --pinentry-mode loopback --passphrase $(grep $2 /etc/postfix/passphrase | cut -d":" -f2) -u $2 --detach-sign -t -a -o $1.asc <$1.fullbody
+
+# recombine header and signed body
+{
+  cat $1.head
+  echo "Content-Type: multipart/signed;"
+  echo "  boundary=\"----PGP-SIG----\";"
+  echo "  protocol=\"application/pgp-signature\""
+  echo
+  echo "------PGP-SIG----"
+  cat $1.fullbody
+  echo
+  echo "------PGP-SIG----"
+  echo
+  echo "Content-Type: application/pgp-signature"
+  echo
+  cat $1.asc
+  echo
+  echo "------PGP-SIG------"
+} >$1.tmp
+
+cp $1.* ~/tmp/
