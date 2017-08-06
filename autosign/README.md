@@ -44,8 +44,10 @@ You need to create the password file `/etc/postfix/smtp-passwd` with one entry:
 examplehost:port remoteusername:remotepassword
 ```
 
-Attention:
+__Attention__:
+
 - The separator between host and credentials is a __whitespace__.
+
 - The separators between host and port as well as between username and password are __colons__.
 
 For some reason, you have to convert the password file to a DB file. So run:
@@ -53,6 +55,13 @@ For some reason, you have to convert the password file to a DB file. So run:
 cd /etc/postfix
 postmap smtp-passwd
 ```
+
+__Warning__: The files `smtp-passwd` and `smtp-passwd.db` contain the smtp-credentials in plain text. Make sure, reading-access is restricted to `root`:
+
+ file/folder                  |  access
+------------------------------|------------
+`/etc/postfix/smtp-passwd`    | `rw-------`
+`/etc/postfix/smtp-passwd.db` | `rw-------`
 
 see also: [Configuring SASL authentication in the Postfix SMTP/LMTP client](http://www.postfix.org/SASL_README.html#client_sasl)
 
@@ -69,18 +78,68 @@ The first line ensures that the service starts on logon and the second line star
 
 The simplest approach to process the body of a mail in postfix seems to be the [after-queue-filter](http://www.postfix.org/FILTER_README.html). Basically you can follow the [Simple content filter example](http://www.postfix.org/FILTER_README.html#simple_filter).
 
-Pitfalls and differences to the boilerplate code:
-- Postfix may leave the `sendmail` command untouched and use `sendmail.postfix` instead. As this was the case with Fedora 23, I had to use the latter in `autosign-filter`.
-- The shell variable `$$` contains the process ID of the filter script and is used to separate the temporary files of different invocations. For debugging and testing I found it more intuitive to have `$$` as filename instead of extension. 
-- Using a seperate output file and checking for its existence allows debugging without really sending the mail. Just write to e.g. `$$.tmp` instead of `$$.out`.
+Create a directory `/opt/autosign/` and copy the following files into it:
+- [`autosign-filter`](./autosign-filter)  
+- [`autosign-action`](./autosign-action)
 
-The files:  
-[`autosign-filter`](./autosign-filter)  
-[`autosign_action`](./autosign-action)
+Create the spool directory `/var/spool/autosign/` referenced in `autosign-filter`.
+
+Create the passphrase-file `/etc/postfix/autosign-passwd` referenced in `autosign-action`. For every sender key add a line in the format (again the separator is a colon):
+```
+sender@domain:passphrase
+```
+
+Modify `/etc/postfix/master.cf` and edit/add the following lines:  
+```
+filter    unix  -       n       n       -       10      pipe
+  flags=Rq user=yoursigningunixuser null_sender=
+  argv=/opt/autosign/autosign-filter -f ${sender} -- ${recipient}
+smtp      inet  n       -       n       -       -       smtpd
+  -o content_filter=filter:dummy
+```
+
+Replace `yoursigningunixuser` with the user account that will do the signing and owns the key. Postfix will call the filter as this user, so the following files and folder must belong to `yoursigningunixuser` and have appropriate access:
+
+ file/folder                    |  access
+--------------------------------|------------
+`/opt/autosign/autosign-filter` | `rwxr--r--`
+`/opt/autosign/autosign-action` | `rwxr--r--`
+`/etc/postfix/autosign-passwd`  | `rw-------`
+`/var/spool/autosign/`          | `rwxr-xr-x`
+
+__Pitfalls and differences to the boilerplate code:__
+
+- Postfix may leave the `sendmail` command untouched and use `sendmail.postfix` instead. As this was the case with Fedora 23, I had to use the latter in `autosign-filter`.
+
+- The shell variable `$$` contains the process ID of the filter script and is used to separate the temporary files of different invocations. For debugging and testing I found it more intuitive to have `$$` as filename instead of extension.
+
+- Using a seperate output file and checking for its existence allows debugging without really sending the mail. Let `autosign-action` simply write to e.g. `$$.tmp` instead of `$$.out` and copy `$$.*` to some other place.
 
 => http://www.postfix.org/FILTER_README.html#simple_filter
 
 ### 6. Milestone: Create autosigned mail ###
 
+If everything went well you should now be able to send autosigned emails via `localhost:25`. If not, it is left as your homework to find out the reason ;-)
+
 Security Concerns
 -----------------
+
+You should consider some points:
+
+- Access to the SMTP port `localhost:25` must remain strictly local. For this, in step 2 we had configured postfix to only accept SMTP connections from localhost. Also, your DSL router should block incoming SMTP requests. Further, Linux desktop distributions should not expose port 25.
+
+- With this in mind: It is really no sane idea to use autosign on a computer serving as a real mail transfer agent.
+
+- Nevertheless: Everyone with physical access to your computer may send autosigned emails.
+
+- Everyone (humans or malware) with physical access to your computer may spy on the password files:  
+`/etc/postfix/smtp-passwd`  
+`/etc/postfix/smtp-passwd.db`  
+`/etc/postfix/autosign-passwd`  
+Therefore set the file permissions to `rw-------`.
+
+You may...
+
+- ...add another restrictions layer using SELinux.
+
+- ...add authentication to the SMTP-server.
