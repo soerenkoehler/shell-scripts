@@ -25,7 +25,7 @@ cat >$$.in || {
     echo Cannot save mail to file; exit $EX_TEMPFAIL; }
 
 # Specify your content filter here. Since we cd'ed into $INSPECT_DIR, we use the full path here.
-/opt/autosign/autosign-action $$ $1
+/opt/autosign/autosign-action $$ $2
 
 if [ -f $$.out ]; then
   $SENDMAIL "$@" <$$.out

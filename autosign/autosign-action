@@ -41,25 +41,35 @@ awk -v filehead=$1.head -v filebody=$1.body -v filemime=$1.mime '
 
 #
 # sign body
-gpg2 --batch --pinentry-mode loopback --passphrase $(grep $2 /etc/postfix/passphrase | cut -d":" -f2) -u $2 --detach-sign -t -a -o $1.asc <$1.fullbody
+#
+SENDER=$(echo "$2" | cut -d"<" -f2 | cut -d">" -f1)
+PASSPHRASE=$(grep "$SENDER" /etc/postfix/autosign-passwd | cut -d":" -f2)
+gpg2 --batch --pinentry-mode loopback --passphrase "$PASSPHRASE" -u "$2" --detach-sign -t -a -o $1.asc <$1.fullbody
 
-# recombine header and signed body
-{
-  cat $1.head
-  echo "Content-Type: multipart/signed;"
-  echo "  boundary=\"----PGP-SIG----\";"
-  echo "  protocol=\"application/pgp-signature\""
-  echo
-  echo "------PGP-SIG----"
-  cat $1.fullbody
-  echo
-  echo "------PGP-SIG----"
-  echo
-  echo "Content-Type: application/pgp-signature"
-  echo
-  cat $1.asc
-  echo
-  echo "------PGP-SIG------"
-} >$1.tmp
-
-cp $1.* ~/tmp/
+if [ -f $1.asc ] ; then
+  #
+  # signing ok => recombine header and signed body
+  #
+  {
+    cat $1.head
+    echo "Content-Type: multipart/signed;"
+    echo "  boundary=\"----PGP-SIG----\";"
+    echo "  protocol=\"application/pgp-signature\""
+    echo
+    echo "------PGP-SIG----"
+    cat $1.fullbody
+    echo
+    echo "------PGP-SIG----"
+    echo
+    echo "Content-Type: application/pgp-signature"
+    echo
+    cat $1.asc
+    echo
+    echo "------PGP-SIG------"
+  } >$1.out
+else
+  #
+  # signing failed => copy input to output
+  #
+  cp $1.in $1.out
+fi
