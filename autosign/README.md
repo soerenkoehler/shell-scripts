@@ -72,6 +72,7 @@ Now you can start postfix. The postfix package in Fedora came with systemd-suppo
 systemctl enable postfix
 systemctl start postfix
 ```
+
 The first line ensures that the service starts on logon and the second line starts it immediately for our test. Configure your mail client to use `localhost:25` as the SMTP port and send some mail.
 
 ### 5. Create the filter ###
@@ -118,6 +119,11 @@ __Pitfalls and differences to the boilerplate code:__
 => http://www.postfix.org/FILTER_README.html#simple_filter
 
 ### 6. Milestone: Create autosigned mail ###
+
+Now restart postfix to reload the configuration:
+```
+systemctl restart postfix
+```
 
 If everything went well you should now be able to send autosigned emails via `localhost:25`. If not, it is left as your homework to find out the reason ;-)
 
