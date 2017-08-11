@@ -1,2 +1,2 @@
 # shell-scripts
-This is a collection of my shell scripts. Please refer to the particular documentation in the project directories.
+This is a collection of bash/awk scripts. Please refer to the particular documentation in the project directories.
