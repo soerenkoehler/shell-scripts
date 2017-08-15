@@ -10,4 +10,4 @@ getGitStatus() {
 }
 export -f getGitStatus
 
-find $GITSTAT_REPOLIST -name .git -type d -exec sh -c 'getGitStatus "$1"' _ {} \;
+find $GITSTAT_REPOLIST -type d -name .git -not -path "*/thirdparty/*" -exec sh -c 'getGitStatus "$1"' _ {} \;
