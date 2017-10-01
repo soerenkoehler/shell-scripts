@@ -80,7 +80,7 @@ The first line ensures that the service starts on logon and the second line star
 The simplest approach to process the body of a mail in postfix seems to be the [after-queue-filter](http://www.postfix.org/FILTER_README.html). Basically you can follow the [Simple content filter example](http://www.postfix.org/FILTER_README.html#simple_filter).
 
 Create a directory `/opt/autosign/` and copy the following files into it:
-- [`autosign-filter`](./autosign-filter)  
+- [`autosign-filter`](./autosign-filter)
 - [`autosign-action`](./autosign-action)
 
 Create the spool directory `/var/spool/autosign/` referenced in `autosign-filter`.
@@ -90,7 +90,7 @@ Create the passphrase-file `/etc/postfix/autosign-passwd` referenced in `autosig
 sender@domain:passphrase
 ```
 
-Modify `/etc/postfix/master.cf` and edit/add the following lines:  
+Modify `/etc/postfix/master.cf` and edit/add the following lines:
 ```
 filter    unix  -       n       n       -       10      pipe
   flags=Rq user=yoursigningunixuser null_sender=
@@ -127,6 +127,20 @@ systemctl restart postfix
 
 If everything went well you should now be able to send autosigned emails via `localhost:25`. If not, it is left as your homework to find out the reason ;-)
 
+Possible Problems Not Related to Autosign
+-----------------------------------------
+
+### SELinux ###
+
+When I upgraded to Fedora 26 SELinux started to block access to `/var/spool/autosign/`. So I had googled around and hacked together a type enforcement file and a shell skript to compile and install it as a module. See folder `selinux`.
+
+### SMTPUTF8 ###
+
+Also with the upgrade to Fedora 26 the postfix-package had [SMTPUTF8](http://www.postfix.org/SMTPUTF8_README.html) enabled by default. This led to bouncing mails, because my ISP's mailserver did not support that feature. If necessary, disable it in `main.cf` with:
+```
+smtputf8_enable = no
+```
+
 Security Concerns
 -----------------
 
@@ -142,7 +156,7 @@ You should consider some points:
 `/etc/postfix/smtp-passwd`  
 `/etc/postfix/smtp-passwd.db`  
 `/etc/postfix/autosign-passwd`  
-Therefore set the file permissions to `rw-------`.
+Therefore set the file permissions to: `rw-------`
 
 You may...
 
