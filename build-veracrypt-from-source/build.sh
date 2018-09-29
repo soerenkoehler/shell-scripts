@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 BUILDDIR=tmp-veracrypt-build
 SOURCE_URL=https://launchpad.net/veracrypt/trunk/1.22/+download/VeraCrypt_1.22_Source.tar.bz2
 SOURCE_ARCHIVE=veracrypt.tar.bz2
@@ -30,32 +32,14 @@ gpg --verify $SIGNATURE $SOURCE_ARCHIVE
 
 tar -xf $SOURCE_ARCHIVE
 
-# FROM builder-download as builder-veracrypt
+cd src
+make \
+    TC_EXTRA_CFLAGS=-Wno-unused-const-variable \
+    TC_EXTRA_CXXFLAGS=-Wno-deprecated-declarations
 
-# RUN apk update && apk add --no-cache \
-#   g++ \
-#   make \
-#   yasm \
-#   wxgtk-dev \
-#   fuse-dev
-
-# download software
-
-# RUN curl -sSLo veracrypt.tar.bz2 https://launchpad.net/veracrypt/trunk/1.22/+download/VeraCrypt_1.22_Source.tar.bz2
-
-# verify signatures
-
-# RUN gpg --recv-keys EB559C7C54DDD393
-# RUN gpg --verify verify/veracrypt-1.22-source.tar.bz2.asc veracrypt.tar.bz2
-
-# install veracrypt
-
-# WORKDIR veracrypt
-# RUN tar -xf ../veracrypt.tar.bz2
-# WORKDIR src
-# RUN make \
-#     TC_EXTRA_CFLAGS=-Wno-unused-const-variable \
-#     TC_EXTRA_CXXFLAGS=-Wno-deprecated-declarations
+cd Main
+chmod 755 veracrypt
+cp veracrypt /usr/bin/veracrypt
 
 ########################################
 ### Final Stage                      ###
